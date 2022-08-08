@@ -12,5 +12,6 @@ import org.springframework.stereotype.Repository;
 public interface BookPromotionRepository extends JpaRepository<BookPromotion, Integer> {
 
     BookPromotion findByPromotionCode(String promotionCode);
+    BookPromotion findByPromotionCodeAndIsActive(String promotionCode, boolean isActive);
 
 }

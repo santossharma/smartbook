@@ -135,31 +135,36 @@ public class BookStoreService {
         List<Integer> bookIds = books.stream().map(BookDTO::getBookId).collect(Collectors.toList());
 
         if (!CollectionUtils.isEmpty(bookStoreRepository.findAllById(bookIds))) {
-            BookPromotion bookPromotion = bookPromotionRepository.findByPromotionCode(promotionCode);
+            BookPromotion bookPromotion = bookPromotionRepository.findByPromotionCodeAndIsActive(promotionCode, true);
+
+            log.info("bookPromotion "+bookPromotion);
 
             if(Objects.nonNull(bookPromotion)) {
-                Predicate<BookDTO> validPromotion = bookDTO -> (bookPromotion.getClassification().equalsIgnoreCase(bookDTO.getClassification()));
-                Predicate<BookDTO> differentClassification = bookDTO -> (!bookPromotion.getClassification().equalsIgnoreCase(bookDTO.getClassification()));
-
-                double totalBookPriceWithPromotionDiscount = books.stream()
-                        .filter(validPromotion)
-                        .mapToDouble(book -> (book.getBookPrice() - (book.getBookPrice() * bookPromotion.getDiscount()) / 100))
-                        .sum();
-
-                double totalBookPriceWithoutPromotion = books.stream()
-                        .filter(differentClassification)
-                        .mapToDouble(BookDTO::getBookPrice)
-                        .sum();
-
-                return totalBookPriceWithoutPromotion + totalBookPriceWithPromotionDiscount;
+                return calculateDiscount(bookPromotion, books);
             }
 
             // Total book price without promotion applied
             return books.stream()
                     .mapToDouble(BookDTO::getBookPrice)
                     .sum();
-        } else {
-            throw new ApplicationException("Book does not exist", HttpStatus.BAD_REQUEST);
         }
+        throw new ApplicationException("Book does not exist", HttpStatus.BAD_REQUEST);
+    }
+
+    private static double calculateDiscount(BookPromotion bookPromotion, List<BookDTO> books) {
+        Predicate<BookDTO> validPromotion = bookDTO -> (bookPromotion.getClassification().equalsIgnoreCase(bookDTO.getClassification()));
+        Predicate<BookDTO> differentClassification = bookDTO -> (!bookPromotion.getClassification().equalsIgnoreCase(bookDTO.getClassification()));
+
+        double totalBookPriceWithPromotionDiscount = books.stream()
+                .filter(validPromotion)
+                .mapToDouble(book -> (book.getBookPrice() - (book.getBookPrice() * bookPromotion.getDiscount()) / 100))
+                .sum();
+
+        double totalBookPriceWithoutPromotion = books.stream()
+                .filter(differentClassification)
+                .mapToDouble(BookDTO::getBookPrice)
+                .sum();
+
+        return totalBookPriceWithoutPromotion + totalBookPriceWithPromotionDiscount;
     }
 }

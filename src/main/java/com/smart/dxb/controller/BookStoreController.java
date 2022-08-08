@@ -124,7 +124,7 @@ public class BookStoreController {
         return ResponseEntity.ok().body(books);
     }
 
-    @GetMapping("/checkout/{promotionCode}")
+    @PostMapping("/checkout")
     @ApiOperation(value = "Calculates payable amount during checkout.")
     public ResponseEntity<BookInvoiceDTO> checkoutBook(@RequestBody List<BookDTO> books,
                     @RequestParam(name = "promotionCode", defaultValue = "NA") String promotionCode) {
